@@ -5,9 +5,16 @@ import { TileLayer, Marker, MapContainer } from 'react-leaflet';
 import './styles.css';
 import logo from '../../assets/logo.svg';
 import api from '../../services/api';
+import { imageOverlay } from 'leaflet';
+
+interface Item {
+    id: number;
+    title: string;
+    image_url: string;
+}
 
 const CreatePoint = () => {
-    const [items, setItems] = useState([]);
+    const [items, setItems] = useState<Item[]>([]);
 
     useEffect(() => {
         api.get('items').then(response => {
@@ -101,9 +108,9 @@ const CreatePoint = () => {
 
                     <ul className="items-grid">
                         {items.map(item => (
-                            <li>
-                                <img src="http://localhost:3333/uploads/oleo.svg" alt="Óleo"/>
-                                <span>Óleo de Cozinha</span>
+                            <li key={item.id}>
+                                <img src={item.image_url} alt={item.title} />
+                                <span>{item.title}</span>
                             </li>
                         ))}                        
                     </ul>
