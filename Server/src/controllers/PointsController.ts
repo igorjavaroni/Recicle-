@@ -21,20 +21,19 @@ class PointsController{
 
         return response.json(points);
     }
-
     async show(request: Request, response: Response){
         const { id } = request.params;
 
         const point = await knex('points').where('id', id).first();
 
-        if(!point){
-            return response.status(400).json({message: 'Point not found.'})
-        }
-
         const items = await knex('items')
             .join('point_items', 'items.id', '=', 'point_items.item_id')
             .where('point_items.point_id', id)
             .select('items.title');
+
+        if(!point){
+            return response.status(400).json({message: 'Point not found.'})
+        }        
 
         return response.json({point, items});
 
@@ -80,10 +79,18 @@ class PointsController{
     
         return response.json({
             id: point_id,
-            ...points,
+            ...points, //Após a criação retorna todos os dados cadastrados
 
         })
     }
+    
+    /*Padrão para comandos: 
+    index = listagem de vários
+    show = listagem de um único
+    create = cadastrar
+    update = alterar
+    delete = deletar*/
+
 }
 
 export default PointsController;

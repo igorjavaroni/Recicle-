@@ -1,18 +1,20 @@
 import knex from '../database/connection';
 import{Request, Response} from 'express';
 
-class itemsController{
+class PointItemsController{
 
 async index(request: Request, response: Response) {
-    const items = await knex('items').select('*');
     
-    const serializedItems = items.map(item => { 
+    const pointItems = await knex('point_items').select('*');
+    
+    const serializedItems = pointItems.map(item => { 
         return {
-            id: item.id,
-            title: item.title,
-            image_url: `http://192.168.1.105:3333/uploads/${item.image}`,
+            id_Ponto: item.point_id,
+            id_Item: item.item_id,
         };
     });
+
+    
     
     return response.json(serializedItems);
     }
@@ -26,4 +28,4 @@ async index(request: Request, response: Response) {
 
 }
 
-export default itemsController;
+export default PointItemsController;
