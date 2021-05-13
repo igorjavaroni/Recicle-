@@ -1,7 +1,7 @@
 import React, { useEffect, useState, ChangeEvent, FormEvent } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import { FiArrowLeft } from 'react-icons/fi';
-import { TileLayer, Marker, MapContainer } from 'react-leaflet';
+import { TileLayer, Marker, MapContainer, Popup, useMap } from 'react-leaflet';
 import './styles.css';
 import logo from '../../assets/logo.svg';
 import api from '../../services/api';
@@ -48,7 +48,7 @@ const CreatePoint = () => {
 
     useEffect(() => {
         navigator.geolocation.getCurrentPosition(position => {
-            const { latitude, longitude } = position.coords;                        
+            const { latitude, longitude } = position.coords;        
             setInitialPosition([latitude, longitude]);            
         });
     });
@@ -88,10 +88,6 @@ const CreatePoint = () => {
         setSelectedCity(city);
     }
 
-    /*function handleMapCliclik (){
-        //API leaflet mudou não encontrei o evento onclick para definir a posição no mapa
-    }*/
-
     function handleInputChange(event: ChangeEvent<HTMLInputElement>){
         const { name, value } = event.target;
         setFormData({ ...formData, [name]: value });
@@ -106,6 +102,32 @@ const CreatePoint = () => {
         else{
             setSelectedItems([ ...selectedItems, id]);
         }        
+    }
+      
+    function LoadCurrentLocationAndMaker(){        
+        const map = useMap();        
+        map.setView(initialPosition, 14)  
+        if(initialPosition[0] !== 0 && initialPosition[1] !== 0){
+            return(
+                <Marker position={initialPosition}>
+                  <Popup>Você está aqui</Popup>
+                </Marker>
+            )
+        }
+        else
+            return null;       
+    }    
+
+    function MyMapComponent() {
+        return (
+            <MapContainer zoom={15} center={initialPosition}>                       
+            <TileLayer
+                attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />             
+            <LoadCurrentLocationAndMaker />            
+            </MapContainer>
+        )
     }
 
     async function handleSubmit(event: FormEvent) {
@@ -198,14 +220,10 @@ const CreatePoint = () => {
                         <h2>Endereço</h2>
                         <span>Selecione o endereço no mapa</span>
                     </legend>
-
-                    <MapContainer center={initialPosition} zoom={15}>                        
-                        <TileLayer
-                            attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        />
-                        <Marker position={initialPosition} />
-                    </MapContainer>
+                    
+                    <div>
+                        {MyMapComponent()}
+                    </div>                    
 
                     <div className="field-group">
                         <div className="field">

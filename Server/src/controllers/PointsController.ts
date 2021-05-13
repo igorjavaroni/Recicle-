@@ -52,6 +52,7 @@ class PointsController{
     }
     async create(request: Request, response: Response) {
         const {
+            image,
             name,
             email,
             whatsapp,
