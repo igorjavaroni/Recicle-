@@ -38,7 +38,7 @@ const CreatePoint = () => {
 
     const [formData, setFormData] = useState({
         name: '',
-        email: '',
+        email: '',        
         whatsapp: '',
     });
 
@@ -141,9 +141,13 @@ const CreatePoint = () => {
 
         const data = new FormData()
 
+        console.log(whatsapp);
+
         data.append('name', name);
         data.append('email', email);
-        data.append('whatsapp', "55"+whatsapp);
+        console.log(whatsapp);
+        data.append('whatsapp', String(55) + whatsapp);
+        console.log(String(55) + whatsapp);
         data.append('uf', uf);
         data.append('city', city);
         data.append('latitude', String(latitude));
@@ -208,7 +212,7 @@ const CreatePoint = () => {
                         <input 
                             type="text"
                             name="whatsapp"
-                            id="nwhatsappame"
+                            id="whatsapp"
                             onChange={handleInputChange}
                         />
                     </div>
