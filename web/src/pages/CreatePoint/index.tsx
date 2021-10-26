@@ -1,12 +1,13 @@
-import React, { useEffect, useState, ChangeEvent, FormEvent } from 'react';
+import { useEffect, useState, ChangeEvent, FormEvent } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import { FiArrowLeft } from 'react-icons/fi';
-import { TileLayer, Marker, MapContainer, Popup, useMap } from 'react-leaflet';
+import { TileLayer, Marker, MapContainer, Popup, useMap, useMapEvents } from 'react-leaflet';
 import './styles.css';
 import logo from '../../assets/logo.svg';
 import api from '../../services/api';
 import axios from 'axios';
 import Dropzone from '../../components/Dropzone';
+import L from "leaflet";
 
 interface Item {
     id: number;
@@ -23,9 +24,11 @@ interface IBGECityResponse {
 }
 
 const CreatePoint = () => {
+
     const [items, setItems] = useState<Item[]>([]);
     const [ufs, setUfs] = useState<string[]>([]);
     const [cities, setCities] = useState<string[]>([])
+    var markersLayer = new L.LayerGroup();
 
     //Posição atual do usuário
     const [selectedPosition, setSelectedPosition] = useState<[number, number]>([0, 0])
@@ -40,12 +43,12 @@ const CreatePoint = () => {
         name: '',
         email: '',        
         whatsapp: '',
-    });
+    });    
 
     const  [selectedItems, setSelectedItems] = useState<number[]>([]);
-
     const histoty = useHistory();
 
+    //Recupera a posição do usuário
     useEffect(() => {
         navigator.geolocation.getCurrentPosition(position => {
             const { latitude, longitude } = position.coords;        
@@ -53,12 +56,14 @@ const CreatePoint = () => {
         });
     });
 
+    //Consulta a API para resgatar os items cadastrados na base
     useEffect(() => {
         api.get('items').then(response => {
             setItems(response.data);
         })
     }, []);
 
+    //Consulta API do IBGE para resgatar as Siglas dos estados
     useEffect(() => {
         axios.get<IBGEUFResponse[]>('https://servicodados.ibge.gov.br/api/v1/localidades/estados').then(response =>{
             const ufInitials = response.data.map(uf => uf.sigla);
@@ -67,6 +72,7 @@ const CreatePoint = () => {
         })
     }, []);
 
+    //Consulta API do IBGE para resgatar os nomes das cidades pertencentes ao estado selecionado
     useEffect(() => {
         if(selectedUf === '0') {
             return;
@@ -104,30 +110,41 @@ const CreatePoint = () => {
         }        
     }
       
-    function LoadCurrentLocationAndMaker(){        
-        const map = useMap();        
-        map.setView(initialPosition, 14)  
-        if(initialPosition[0] !== 0 && initialPosition[1] !== 0){
-            return(
-                <Marker position={initialPosition}>
-                  <Popup>Você está aqui</Popup>
-                </Marker>
-            )
-        }
-        else
-            return null;       
-    }    
-
-    function MyMapComponent() {
+    function MyMapComponent() {        
         return (
-            <MapContainer zoom={15} center={initialPosition}>                       
+            <MapContainer>                  
             <TileLayer
                 attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />             
-            <LoadCurrentLocationAndMaker />            
+            <LoadCurrentLocationAndMaker/>     
+            <OnMapClick/>            
             </MapContainer>
-        )
+        )        
+    }
+
+    function LoadCurrentLocationAndMaker(){        
+        const map = useMap();        
+        map.setView(initialPosition, 16)  
+        if(initialPosition[0] !== 0 && initialPosition[1] !== 0){                                
+            var marker = L.marker(initialPosition);
+            markersLayer = L.layerGroup().addTo(map);        
+        } 
+        return null;
+    }    
+    
+    function OnMapClick() {        
+        const map = useMapEvents({
+        click: (e) => {                
+            map.removeLayer(markersLayer)
+            var marker = L.marker(e.latlng);
+            marker.bindPopup("Localização do estabelecimento").openPopup();
+            marker.addTo(markersLayer);
+            markersLayer.addTo(map)
+            console.log(initialPosition);
+            setInitialPosition([e.latlng.lat, e.latlng.lng])                       
+        }})
+        return null;
     }
 
     async function handleSubmit(event: FormEvent) {
@@ -136,6 +153,7 @@ const CreatePoint = () => {
         const { name, email, whatsapp } = formData;
         const uf = selectedUf;
         const city = selectedCity;
+        console.log(initialPosition)
         const [latitude, longitude] = initialPosition;
         const items = selectedItems;
 
@@ -226,7 +244,7 @@ const CreatePoint = () => {
                     </legend>
                     
                     <div>
-                        {MyMapComponent()}
+                        {MyMapComponent()}                
                     </div>                    
 
                     <div className="field-group">
